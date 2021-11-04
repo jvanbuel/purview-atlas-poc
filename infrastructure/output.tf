@@ -11,6 +11,6 @@ output "client_secret" {
   sensitive = true
 }
 
-output "catalog_endpoint" {
+output "atlas_endpoint" {
   value = azurerm_purview_account.pv_account.catalog_endpoint
 }
