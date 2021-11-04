@@ -16,6 +16,8 @@ openpyxl==3.0.9
     # via pyapacheatlas
 pyapacheatlas==0.9.1
     # via -r requirements.in
+python-dotenv==0.19.1
+    # via -r requirements.in
 requests==2.26.0
     # via pyapacheatlas
 urllib3==1.26.7

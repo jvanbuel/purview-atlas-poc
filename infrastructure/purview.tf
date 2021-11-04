@@ -2,5 +2,5 @@ resource "azurerm_purview_account" "pv_account" {
   name                = "purviewatlaspoc"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
-  sku_name            = "Standard_4"
+  sku_name            = "Standard_1"
 }
