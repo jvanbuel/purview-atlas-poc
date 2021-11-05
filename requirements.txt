@@ -8,17 +8,29 @@ certifi==2021.10.8
     # via requests
 charset-normalizer==2.0.7
     # via requests
+delta-spark==1.0.0
+    # via -r requirements.in
 et-xmlfile==1.1.0
     # via openpyxl
 idna==3.3
     # via requests
+importlib-metadata==4.8.1
+    # via delta-spark
 openpyxl==3.0.9
     # via pyapacheatlas
+py4j==0.10.9
+    # via pyspark
 pyapacheatlas==0.9.1
     # via -r requirements.in
+pyspark==3.1.2
+    # via
+    #   -r requirements.in
+    #   delta-spark
 python-dotenv==0.19.1
     # via -r requirements.in
 requests==2.26.0
     # via pyapacheatlas
 urllib3==1.26.7
     # via requests
+zipp==3.6.0
+    # via importlib-metadata

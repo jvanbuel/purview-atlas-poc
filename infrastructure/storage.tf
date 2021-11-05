@@ -7,3 +7,10 @@ resource "azurerm_storage_account" "storage_account" {
   account_replication_type = "GRS"
   is_hns_enabled           = true
 }
+
+
+resource "azurerm_storage_container" "datalake" {
+  name                  = "datalake"
+  storage_account_name  = azurerm_storage_account.storage_account.name
+  container_access_type = "private"
+}
