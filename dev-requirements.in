@@ -1,3 +1,5 @@
 -c requirements.txt
 ipykernel
 nbconvert
+black
+flake8
