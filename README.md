@@ -7,3 +7,5 @@ At the time of writing, Azure does not have an SDK for Purview. As recommended b
 The infrastructure is setup with Terraform and can be found in the `infrastructure` directory. It contains a resource group and a Purview and storage account within that resource group. In addition, it contains an Azure AD Application and associated Service Principal which are used to programmatically access the Atlas API. The outputs of the Terraform root module are the `client_id`, `client_secret`, `tenant_id` and `atlas_endpoint` that are required to access the API. 
 
 Note that you cannot create the role assigmnents that are needed for your Service Principal (SP) in the Purview Data Plane. To give your SP access, you'll have to click your way through the Purview UI as described in the [official docs](https://docs.microsoft.com/en-us/azure/purview/tutorial-using-rest-apis). 
+
+You can create role assignments for the SP for the data sources that you want to access (another way would be to link a Key Vault (KV) and then use the secrets within the KV for gaining access). 

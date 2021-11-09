@@ -1,4 +1,3 @@
-from delta import *
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 from dotenv import load_dotenv

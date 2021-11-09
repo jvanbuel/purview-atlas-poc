@@ -14,3 +14,12 @@ output "client_secret" {
 output "atlas_endpoint" {
   value = azurerm_purview_account.pv_account.catalog_endpoint
 }
+
+output "storage_account" {
+  value = azurerm_storage_account.storage_account.name
+}
+
+output "storage_key" {
+  value     = azurerm_storage_account.storage_account.primary_access_key
+  sensitive = true
+}
