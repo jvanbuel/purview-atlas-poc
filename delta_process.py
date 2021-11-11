@@ -73,6 +73,15 @@ combined_data = vaccine_data.join(other=country_data, on="Country")
     .mode("overwrite")
     .option("overwriteSchema", "true")
     .save(
-        f"abfss://datalake@{storage_account}.dfs.core.windows.net/extended_vaccine_data"
+        f"abfss://datalake@{storage_account}.dfs.core.windows.net/clean/extended_vaccine_data"
+    )
+)
+
+(
+    combined_data.coalesce(1).write.format("parquet")
+    .mode("overwrite")
+    .option("overwriteSchema", "true")
+    .save(
+        f"abfss://datalake@{storage_account}.dfs.core.windows.net/master/extended_vaccine_data"
     )
 )

@@ -1,4 +1,4 @@
-data "azuread_client_config" "current" {}
+
 
 resource "azuread_application" "app" {
   display_name = "purviewatlaspoc"
@@ -17,6 +17,13 @@ resource "time_rotating" "secret_rotation" {
 
 resource "azuread_application_password" "app_secret" {
   application_object_id = azuread_application.app.object_id
+  rotate_when_changed = {
+    rotation = time_rotating.secret_rotation.id
+  }
+}
+
+resource "azuread_service_principal_password" "sp_secret" {
+  service_principal_id = azuread_service_principal.sp.object_id
   rotate_when_changed = {
     rotation = time_rotating.secret_rotation.id
   }
