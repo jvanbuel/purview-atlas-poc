@@ -1,0 +1,14 @@
+{
+	"name": "AzureKeyVault",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://kvpurviewatlaspoc.vault.azure.net/",
+			"credential": {
+				"referenceName": "uaid-credential",
+				"type": "CredentialReference"
+			}
+		}
+	}
+}
