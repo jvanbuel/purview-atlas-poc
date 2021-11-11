@@ -15,10 +15,16 @@ resource "azurerm_storage_container" "datalake" {
   container_access_type = "private"
 }
 
-resource "azurerm_role_assignment" "role" {
+resource "azurerm_role_assignment" "purview_role" {
   scope                = azurerm_storage_account.storage_account.id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = azuread_service_principal.sp.object_id
+  principal_id         = azurerm_purview_account.pv_account.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "df_role" {
+  scope                = azurerm_storage_account.storage_account.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_data_factory.data_factory.identity[0].principal_id
 }
 
 resource "azurerm_storage_blob" "country_data" {

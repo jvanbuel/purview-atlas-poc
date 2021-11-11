@@ -35,4 +35,23 @@ resource "azurerm_key_vault" "keyvault" {
       "Get",
     ]
   }
+
+  access_policy {
+    tenant_id = azurerm_data_factory.data_factory.identity[0].tenant_id
+    object_id = azurerm_data_factory.data_factory.identity[0].principal_id
+
+    key_permissions = [
+      "Get",
+    ]
+
+    secret_permissions = [
+      "Get", "List", "Delete", "Set"
+    ]
+  }
+}
+
+resource "azurerm_key_vault_secret" "client_secret" {
+  name         = "client-secret"
+  value        = azuread_application_password.app_secret.value
+  key_vault_id = azurerm_key_vault.keyvault.id
 }
