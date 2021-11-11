@@ -1,0 +1,21 @@
+{
+	"name": "AzureDataLakeStorage",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://purviewatlaspoc.dfs.core.windows.net/",
+			"tenant": "55226c2c-0b83-4621-a5cd-e8e0e57ec920",
+			"servicePrincipalId": "57935b17-9993-41b9-b58e-acbcd170c355",
+			"servicePrincipalCredentialType": "ServicePrincipalKey",
+			"servicePrincipalCredential": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "AzureKeyVault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "client-secret"
+			}
+		}
+	}
+}
