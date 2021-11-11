@@ -1,0 +1,62 @@
+{
+	"name": "extended_vaccine_parquet",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "part-00000-bfe7782c-18ed-4c41-a0e3-5ab73274d6ff-c000.snappy.parquet",
+				"folderPath": "master/extended_vaccine_data",
+				"fileSystem": "datalake"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "Country",
+				"type": "UTF8"
+			},
+			{
+				"name": "Doses_administered_per_100_people",
+				"type": "INT32"
+			},
+			{
+				"name": "Total_doses_administered",
+				"type": "INT64"
+			},
+			{
+				"name": "Percentage_population_vaccinated",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "Percentage_population_fully_vaccinated",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "Region",
+				"type": "UTF8"
+			},
+			{
+				"name": "Surface_area",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "Population_in_thousands",
+				"type": "INT32"
+			},
+			{
+				"name": "Sex_ratio",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "GDP",
+				"type": "INT32"
+			}
+		]
+	}
+}
