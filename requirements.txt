@@ -29,7 +29,9 @@ pyspark==3.1.2
 python-dotenv==0.19.1
     # via -r requirements.in
 requests==2.26.0
-    # via pyapacheatlas
+    # via
+    #   -r requirements.in
+    #   pyapacheatlas
 urllib3==1.26.7
     # via requests
 zipp==3.6.0
