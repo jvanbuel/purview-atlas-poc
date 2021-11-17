@@ -2,11 +2,18 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 from dotenv import load_dotenv
 import os
+from src.utils import PurviewPOCClient
+from pyapacheatlas.auth import ServicePrincipalAuthentication
 
 load_dotenv()
 
 storage_account = os.environ.get("STORAGE_ACCOUNT")
 storage_key = os.environ.get("STORAGE_KEY")
+scan = os.environ.get("SCAN")
+tenant_id = os.environ.get("TENANT_ID")
+client_id = os.environ.get("CLIENT_ID")
+client_secret = os.environ.get("CLIENT_SECRET")
+account_name = os.environ.get("PURVIEW_ACCOUNT")
 
 jars = (
     ""
@@ -78,10 +85,33 @@ combined_data = vaccine_data.join(other=country_data, on="Country")
 )
 
 (
-    combined_data.coalesce(1).write.format("parquet")
+    combined_data.coalesce(1)
+    .write.format("parquet")
     .mode("overwrite")
     .option("overwriteSchema", "true")
     .save(
         f"abfss://datalake@{storage_account}.dfs.core.windows.net/master/extended_vaccine_data"
     )
 )
+
+auth = ServicePrincipalAuthentication(
+    tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
+)
+client = PurviewPOCClient(account_name=account_name, authentication=auth)
+
+if int(scan) == 1:
+    print("hello")
+    client.create_or_update_collection(collection_name="MyCollection")
+    client.register_Adls2_data_source(
+        source_name="MyAdls2Source",
+        storage_account=storage_account,
+        collection_name="MyCollection",
+    )
+    client.create_or_update_scan(
+        source_name="MyAdls2Source",
+        scan_name="MyCustomScan",
+        collection_name="MyCollection",
+    )
+    client.run_scan(
+        source_name="MyAdls2Source", scan_name="MyCustomScan", scan_level="Incremental"
+    )
