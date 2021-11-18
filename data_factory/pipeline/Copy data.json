@@ -21,6 +21,7 @@
 							"type": "AzureBlobFSReadSettings",
 							"recursive": true,
 							"wildcardFolderPath": "master/extended_vaccine_data",
+							"wildcardFileName": "*",
 							"enablePartitionDiscovery": true
 						}
 					},
