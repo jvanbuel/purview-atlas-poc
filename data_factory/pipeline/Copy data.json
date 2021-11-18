@@ -20,6 +20,7 @@
 						"storeSettings": {
 							"type": "AzureBlobFSReadSettings",
 							"recursive": true,
+							"wildcardFolderPath": "master/extended_vaccine_data",
 							"enablePartitionDiscovery": true
 						}
 					},
