@@ -1,5 +1,13 @@
 from pyapacheatlas.core import PurviewClient
 from pyapacheatlas.core.util import GuidTracker
+from pyapacheatlas.core.typedef import (
+    AtlasAttributeDef,
+    EntityTypeDef,
+    RelationshipTypeDef,
+)
+from pyapacheatlas.core import AtlasEntity
+from pyspark.sql import DataFrame
+
 import requests
 import uuid
 
@@ -103,3 +111,90 @@ class PurviewPOCClient(PurviewClient):
 
         return self._handle_response(runScan)
 
+    def create_delta_table_typedefs(self):
+
+        type_delta_table_df = EntityTypeDef(
+            name="custom_delta_table",
+            attributeDefs=[AtlasAttributeDef(name="format")],
+            superTypes=["DataSet"],
+            options={"schemaElementAttribute": "columns"},
+        )
+
+        type_delta_table_columns = EntityTypeDef(
+            name="custom_delta_table_column",
+            attributeDefs=[AtlasAttributeDef(name="data_type")],
+            superTypes=["DataSet"],
+        )
+
+        type_spark_job = EntityTypeDef(
+            name="custom_spark_job_process",
+            attributeDefs=[
+                AtlasAttributeDef(name="job_type", isOptional=False),
+                AtlasAttributeDef(name="schedule", defaultValue="adHoc"),
+            ],
+            superTypes=["Process"],
+        )
+
+        spark_column_to_df_relationship = RelationshipTypeDef(
+            name="custom_delta_table_to_columns",
+            relationshipCategory="COMPOSITION",
+            endDef1={
+                "type": "custom_delta_table",
+                "name": "columns",
+                "isContainer": True,
+                "cardinality": "SET",
+                "isLegacyAttribute": False,
+            },
+            endDef2={
+                "type": "custom_delta_table_column",
+                "name": "delta_table",
+                "isContainer": False,
+                "cardinality": "SINGLE",
+                "isLegacyAttribute": False,
+            },
+        )
+
+        return self.upload_typedefs(
+            entityDefs=[type_delta_table_df, type_delta_table_columns, type_spark_job],
+            relationshipDefs=[spark_column_to_df_relationship],
+            force_update=True,
+        )
+
+    def register_df(self, df: DataFrame, name: str, qualified_name: str):
+        colEntities = []
+        guid_tracker = GuidTracker()
+
+        ts = AtlasEntity(
+            name="demoDFSchema",
+            typeName="tabular_schema",
+            qualified_name=f"{qualified_name}_tabular_schema",
+            guid=guid_tracker.get_guid(),
+        )
+
+        for (col, type) in df.dtypes:
+            colEntities.append(
+                AtlasEntity(
+                    name=col,
+                    typeName="column",
+                    qualified_name=f"{qualified_name}_column_{col}",
+                    guid=guid_tracker.get_guid(),
+                    attributes={
+                        "type": type,
+                        "description": f"Column {col} has type {type}",
+                    },
+                    relationshipAttributes={"composeSchema": ts.to_json(minimum=True)},
+                )
+            )
+
+        rs = AtlasEntity(
+            name=name,
+            typeName="azure_datalake_gen2_resource_set",
+            qualified_name=qualified_name,
+            guid=guid_tracker.get_guid(),
+            relationshipAttributes={"tabular_schema": ts.to_json(minimum=True)},
+        )
+
+        return (rs, ts, colEntities)
+
+    def register_lineage(self, input, output):
+        return

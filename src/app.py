@@ -100,7 +100,7 @@ auth = ServicePrincipalAuthentication(
 client = PurviewPOCClient(account_name=account_name, authentication=auth)
 
 if int(scan) == 1:
-    print("hello")
+    
     client.create_or_update_collection(collection_name="MyCollection")
     client.register_Adls2_data_source(
         source_name="MyAdls2Source",

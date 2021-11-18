@@ -33,17 +33,14 @@ A data catalog worth its salt not only gives you an overview of your data, but a
 
 The service connection between Data Factory and Purview needs to be set up manually and is not stored in the Resource Manager templates created by Data Factory (see [docs](https://docs.microsoft.com/en-us/azure/data-factory/connect-data-factory-to-azure-purview) on how to setup the connection). 
 
+The `data_factory` folder contains the Azure Resource Manager (ARM) templates of the Data Factory datasets of the example pipeline of the previous section. It also contains an ARM template of a Data Factory pipeline that converts the parquet file in the `master` directory of the datalake to a csv file. The Data Factory defined in the Terraform code automatically applies these ARM templates upon creation. After setting up the connection between Data Factory and Purview, and triggering the pipeline in Data Factory, the lineage of this pipeline will be discoverable in your Purview account. 
+
 There exists a [custom Atlas connector](https://github.com/hortonworks-spark/spark-atlas-connector) for lineage of Spark jobs, developed by Hortonworks, but it seems that the project is no longer actively maintained. There is still a [tutorial](https://docs.microsoft.com/en-gb/azure/purview/how-to-lineage-spark-atlas-connector) on how to configure this connector in the Purview docs, but the last supported Spark version is 2.4. To document lineage for other data sources, the only option is to create custom entities via the Atlas API.
 
 ## CRUD of custom resources and lineage with the Atlas API
 
 
-//
-
-//TODO 
-
-//
-
+To add data sources which are not (yet) supported natively by Azure Purview, you can directly access the Atlas API.  
 
 
 ## Access control (private preview)
@@ -51,6 +48,8 @@ There exists a [custom Atlas connector](https://github.com/hortonworks-spark/spa
 During Microsoft Ignite 2021, a new feature for Purview to provision data access policies for Azure Storage was announced. With this new feature, you can limit access to resources in your Storage Accounts at the folder or file level.
 
 A screenshot in the [documentation](https://docs.microsoft.com/en-gb/azure/purview/how-to-access-policies-storage) seems to suggest that you can use the classification attribute of a data resource to specify whether to apply a policy or not, but this feature is not showcased in the corresponding [demo video](https://www.youtube.com/watch?v=CFE8ltT19Ss). 
+
+The Purview documentation on this new access policy feature also hints at a new feature to manage fine-grained access control on your data assets in Azure Storage: [tag-based RBAC roles](https://docs.microsoft.com/en-us/azure/role-based-access-control/conditions-overview). While still in preview, this could provide a powerful and more easily manageable alternative to ACLs. 
 
 ## Pricing
 
