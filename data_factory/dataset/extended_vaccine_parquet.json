@@ -10,7 +10,6 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "part-00000-bfe7782c-18ed-4c41-a0e3-5ab73274d6ff-c000.snappy.parquet",
 				"folderPath": "master/extended_vaccine_data",
 				"fileSystem": "datalake"
 			},
