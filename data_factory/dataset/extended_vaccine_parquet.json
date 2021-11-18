@@ -10,6 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
+				"fileName": "*",
 				"folderPath": "master/extended_vaccine_data",
 				"fileSystem": "datalake"
 			},
