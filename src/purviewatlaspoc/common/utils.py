@@ -1,4 +1,5 @@
 from pyapacheatlas.core import PurviewClient
+from pyapacheatlas.auth import ServicePrincipalAuthentication
 from pyapacheatlas.core.util import GuidTracker
 from pyapacheatlas.core.typedef import (
     AtlasAttributeDef,
@@ -7,19 +8,34 @@ from pyapacheatlas.core.typedef import (
 )
 from pyapacheatlas.core import AtlasEntity
 from pyspark.sql import DataFrame
+from dotenv import load_dotenv
+import os
 
 import requests
 import uuid
 
+load_dotenv()
+
+scan = os.environ.get("SCAN")
+tenant_id = os.environ.get("TENANT_ID")
+client_id = os.environ.get("CLIENT_ID")
+client_secret = os.environ.get("CLIENT_SECRET")
+account_name = os.environ.get("PURVIEW_ACCOUNT")
+storage_account = os.environ.get("STORAGE_ACCOUNT")
+
 
 class PurviewPOCClient(PurviewClient):
-    def __init__(self, account_name: str, authentication=None):
+    def __init__(self):
         self.account_name = account_name
         self.scan_endpoint_url = f"https://{account_name}.scan.purview.azure.com"
         self.catalog_endpoint_url = (
             f"https://{account_name}.purview.azure.com/catalog/api"
         )
         self.account_endpoint_url = f"https://{account_name}.purview.azure.com/account"
+
+        authentication = ServicePrincipalAuthentication(
+            tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
+        )
         super().__init__(account_name=account_name, authentication=authentication)
 
     def create_or_update_collection(
@@ -194,7 +210,42 @@ class PurviewPOCClient(PurviewClient):
             relationshipAttributes={"tabular_schema": ts.to_json(minimum=True)},
         )
 
-        return (rs, ts, colEntities)
+        return self.upload_entities([rs, ts, *colEntities])
+
+    def get_minimal_rep(
+        self, qualifiedName: str, typeName: str = "azure_datalake_gen2_resource_set"
+    ):
+        return {
+            "guid": self.get_entity(qualifiedName=qualifiedName, typeName=typeName)[
+                "entities"
+            ][0]["guid"],
+            "typeName": typeName,
+            "qualifiedName": qualifiedName,
+        }
 
     def register_lineage(self, input, output):
         return
+
+    def scan(
+        self,
+        collection_name: str = "MyCollection",
+        source_name: str = "MyAdls2Source",
+        scan_name: str = "MyCustomScan",
+        scan_level: str = "Incremental",
+    ):
+        self.create_or_update_collection(collection_name=collection_name)
+        self.register_Adls2_data_source(
+            source_name=source_name,
+            storage_account=storage_account,
+            collection_name=collection_name,
+        )
+        self.create_or_update_scan(
+            source_name=source_name,
+            scan_name=scan_name,
+            collection_name=collection_name,
+        )
+        self.run_scan(
+            source_name=source_name,
+            scan_name=scan_name,
+            scan_level="Incremental",
+        )
