@@ -6,8 +6,8 @@ from pyapacheatlas.core.typedef import (
     EntityTypeDef,
     RelationshipTypeDef,
 )
-from pyapacheatlas.core import AtlasEntity
-from pyspark.sql import DataFrame
+from pyapacheatlas.core import AtlasEntity, AtlasProcess
+from pyspark.sql import DataFrame, dataframe
 from dotenv import load_dotenv
 import os
 
@@ -37,6 +37,7 @@ class PurviewPOCClient(PurviewClient):
             tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
         )
         super().__init__(account_name=account_name, authentication=authentication)
+        self.create_delta_table_typedefs()
 
     def create_or_update_collection(
         self, collection_name: str, parent_collection: str = None
@@ -134,6 +135,13 @@ class PurviewPOCClient(PurviewClient):
             attributeDefs=[AtlasAttributeDef(name="format")],
             superTypes=["DataSet"],
             options={"schemaElementAttribute": "columns"},
+            relationshipAttributeDefs=[
+                {
+                    "name": "tabular_schema",
+                    "typeName": "tabular_schema",
+                    "isOptional": True,
+                }
+            ],
         )
 
         type_delta_table_columns = EntityTypeDef(
@@ -212,6 +220,44 @@ class PurviewPOCClient(PurviewClient):
 
         return self.upload_entities([rs, ts, *colEntities])
 
+    def register_delta_table(self, df: DataFrame, name: str):
+        colEntities = []
+        guid_tracker = GuidTracker()
+        qualified_name = f"pyapache://{name}_delta_table"
+
+        ts = AtlasEntity(
+            name=f"{name}_tabular_schema",
+            typeName="tabular_schema",
+            qualified_name=f"pyapache://{name}_tabular_schema",
+            guid=guid_tracker.get_guid(),
+        )
+
+        for (col, type) in df.dtypes:
+            colEntities.append(
+                AtlasEntity(
+                    name=col,
+                    typeName="column",
+                    qualified_name=f"{qualified_name}_column_{col}",
+                    guid=guid_tracker.get_guid(),
+                    attributes={
+                        "type": type,
+                        "description": f"Column {col} has type {type}",
+                    },
+                    relationshipAttributes={"composeSchema": ts.to_json(minimum=True)},
+                )
+            )
+
+        dt = AtlasEntity(
+            name=name,
+            typeName="custom_delta_table",
+            qualified_name=qualified_name,
+            guid=guid_tracker.get_guid(),
+            relationshipAttributes={"tabular_schema": ts.to_json(minimum=True)},
+        )
+
+        return self.upload_entities([dt, ts, *colEntities])
+
+
     def get_minimal_rep(
         self, qualifiedName: str, typeName: str = "azure_datalake_gen2_resource_set"
     ):
@@ -223,8 +269,30 @@ class PurviewPOCClient(PurviewClient):
             "qualifiedName": qualifiedName,
         }
 
-    def register_lineage(self, input, output):
-        return
+    def register_delta_lineage(self, name: str, inputs, outputs):
+        guid_tracker = GuidTracker()
+        process = AtlasProcess(
+            name=name,
+            qualified_name=f"pyapacheatlas://{name}",
+            typeName="custom_spark_job_process",
+            guid=guid_tracker.get_guid(),
+            attributes={"job_type": "batch"},
+            inputs=[
+                self.get_minimal_rep(
+                    qualifiedName=f"pyapache://{input}_delta_table",
+                    typeName="custom_delta_table",
+                )
+                for input in inputs
+            ],
+            outputs=[
+                self.get_minimal_rep(
+                    qualifiedName=f"pyapache://{output}_delta_table",
+                    typeName="custom_delta_table",
+                )
+                for output in outputs
+            ],
+        )
+        return self.upload_entities(process)
 
     def scan(
         self,

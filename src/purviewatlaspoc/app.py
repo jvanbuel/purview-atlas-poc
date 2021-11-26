@@ -14,7 +14,7 @@ scan = os.environ.get("SCAN")
 
 
 class PurviewDemoPipeline:
-    def __init__(self, spark: SparkSession, purview_client: PurviewPOCClient):
+    def __init__(self, spark: ClosableSparkSession, purview_client: PurviewPOCClient):
         self.spark = spark
         self.base_storage_path = (
             f"abfss://datalake@{storage_account}.dfs.core.windows.net"
@@ -77,19 +77,38 @@ class PurviewDemoPipeline:
             other=clean_country_data, on="Country"
         )
 
-        return extended_vaccine_data
+        return extended_vaccine_data, clean_vaccine_data, clean_country_data
 
     def write(
         self,
         extended_vaccine_data: DataFrame,
+        clean_vaccine_data: DataFrame,
+        clean_country_data: DataFrame,
     ):
-        (
-            extended_vaccine_data.write.format("delta")
-            .mode("overwrite")
-            .option("overwriteSchema", "true")
-            .save(f"{self.base_storage_path}/clean/extended_vaccine_data")
+
+        # write to clean 
+        for df, name in (
+            (extended_vaccine_data, "extended_vaccine"),
+            (clean_country_data, "clean_country"),
+            (clean_vaccine_data, "clean_vaccine"),
+        ):
+            (
+                df.write.format("delta")
+                .mode("overwrite")
+                .option("overwriteSchema", "true")
+                .save(f"{self.base_storage_path}/clean/{name}_data")
+            )
+            # register individual delta tables
+            self.purview_client.register_delta_table(df=df, name=name)
+
+        # register lineage
+        self.purview_client.register_delta_lineage(
+            name="purviewdemo",
+            inputs=["clean_country", "clean_vaccine"],
+            outputs=["extended_vaccine"],
         )
 
+        # write to master 
         (
             extended_vaccine_data.coalesce(1)
             .write.format("parquet")
@@ -98,12 +117,14 @@ class PurviewDemoPipeline:
             .save(f"{self.base_storage_path}/master/extended_vaccine_data")
         )
 
+        # optional scanning of ADLS
         if int(scan) == 1:
             self.purview_client.scan()
+
         return
 
     def run(self):
-        self.write(self.transform(*self.extract()))
+        self.write(*self.transform(*self.extract()))
 
 
 if __name__ == "__main__":
