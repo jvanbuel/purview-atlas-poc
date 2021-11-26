@@ -5,6 +5,7 @@ from pyapacheatlas.core.typedef import (
     AtlasAttributeDef,
     EntityTypeDef,
     RelationshipTypeDef,
+    AtlasRelationshipAttributeDef,
 )
 from pyapacheatlas.core import AtlasEntity, AtlasProcess
 from pyspark.sql import DataFrame, dataframe
@@ -134,13 +135,11 @@ class PurviewPOCClient(PurviewClient):
             name="custom_delta_table",
             attributeDefs=[AtlasAttributeDef(name="format")],
             superTypes=["DataSet"],
-            options={"schemaElementAttribute": "columns"},
+            options={"schemaElementsAttribute": "tabular_schema"},
             relationshipAttributeDefs=[
-                {
-                    "name": "tabular_schema",
-                    "typeName": "tabular_schema",
-                    "isOptional": True,
-                }
+                AtlasRelationshipAttributeDef(
+                    name="tabular_schema", relationshipTypeName="tabular_schema"
+                )
             ],
         )
 
@@ -160,7 +159,7 @@ class PurviewPOCClient(PurviewClient):
         )
 
         spark_column_to_df_relationship = RelationshipTypeDef(
-            name="custom_delta_table_to_columns",
+            name="custom_delta_table_columns",
             relationshipCategory="COMPOSITION",
             endDef1={
                 "type": "custom_delta_table",
@@ -170,7 +169,7 @@ class PurviewPOCClient(PurviewClient):
                 "isLegacyAttribute": False,
             },
             endDef2={
-                "type": "custom_delta_table_column",
+                "type": "column",
                 "name": "delta_table",
                 "isContainer": False,
                 "cardinality": "SINGLE",
@@ -225,10 +224,10 @@ class PurviewPOCClient(PurviewClient):
         guid_tracker = GuidTracker()
         qualified_name = f"pyapache://{name}_delta_table"
 
-        ts = AtlasEntity(
-            name=f"{name}_tabular_schema",
-            typeName="tabular_schema",
-            qualified_name=f"pyapache://{name}_tabular_schema",
+        dt = AtlasEntity(
+            name=name,
+            typeName="custom_delta_table",
+            qualified_name=qualified_name,
             guid=guid_tracker.get_guid(),
         )
 
@@ -243,20 +242,11 @@ class PurviewPOCClient(PurviewClient):
                         "type": type,
                         "description": f"Column {col} has type {type}",
                     },
-                    relationshipAttributes={"composeSchema": ts.to_json(minimum=True)},
+                    relationshipAttributes={"delta_table": dt.to_json(minimum=True)},
                 )
             )
 
-        dt = AtlasEntity(
-            name=name,
-            typeName="custom_delta_table",
-            qualified_name=qualified_name,
-            guid=guid_tracker.get_guid(),
-            relationshipAttributes={"tabular_schema": ts.to_json(minimum=True)},
-        )
-
-        return self.upload_entities([dt, ts, *colEntities])
-
+        return self.upload_entities([dt, *colEntities])
 
     def get_minimal_rep(
         self, qualifiedName: str, typeName: str = "azure_datalake_gen2_resource_set"
